@@ -1,9 +1,5 @@
 package main
 
-import (
-	"sync"
-)
-
 const src = "/run/media/hawk/EOS_DIGITAL/DCIM/100CANON"
 const dst = "/home/hawk/data/photos"
 const cachePath = "/home/hawk/data/photos/cache.bin"
@@ -16,13 +12,11 @@ const (
 )
 
 func main() {
-	wg := &sync.WaitGroup{}
 	dirChan := make(chan dirReq, chanSize)
 	go dirCreator(dirChan)
 
 	cache := initCache()
-	createWorkers(workers, wg, dst, walker(src), dirChan, cache)
-	wg.Wait()
+	startWorkers(workers, dst, walker(src), dirChan, cache)
 	close(dirChan)
 	cache.save()
 }

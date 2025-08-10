@@ -8,18 +8,19 @@ import (
 	"sync"
 )
 
-func createWorkers(
+func startWorkers(
 	workersCount int,
-	wg *sync.WaitGroup,
 	dst string,
 	metadata <-chan fileMetadata,
 	dirChan chan<- dirReq,
 	cache *cache,
 ) {
+	wg := &sync.WaitGroup{}
 	wg.Add(workersCount)
 	for range workersCount {
 		go worker(wg, dst, metadata, dirChan, cache)
 	}
+	wg.Wait()
 }
 
 func worker(
