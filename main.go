@@ -6,6 +6,7 @@ import (
 
 const src = "/run/media/hawk/EOS_DIGITAL/DCIM/100CANON"
 const dst = "/home/hawk/data/photos"
+const cachePath = "/home/hawk/data/photos/cache.bin"
 const workers = 8
 
 const (
@@ -19,7 +20,9 @@ func main() {
 	dirChan := make(chan dirReq, chanSize)
 	go dirCreator(dirChan)
 
-	createWorkers(workers, wg, dst, walker(src), dirChan)
+	cache := initCache()
+	createWorkers(workers, wg, dst, walker(src), dirChan, cache)
 	wg.Wait()
 	close(dirChan)
+	cache.save()
 }
