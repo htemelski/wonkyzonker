@@ -29,11 +29,13 @@ func walker(dir string) chan fileMetadata {
 	metadataChan := make(chan fileMetadata, chanSize)
 	f, err := os.Open(dir)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 	files, err := f.Readdirnames(-1)
 	if err != nil {
-		panic(err)
+		fmt.Printf("failed read dirnames %s\n", err.Error())
+		os.Exit(1)
 	}
 
 	filesCount := len(files)
@@ -55,7 +57,8 @@ func walker(dir string) chan fileMetadata {
 			return nil
 		})
 		if err != nil {
-			panic(err)
+			fmt.Printf("failed walk dir %s\n", err.Error())
+			os.Exit(1)
 		}
 	}()
 

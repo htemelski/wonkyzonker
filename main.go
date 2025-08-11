@@ -22,6 +22,7 @@ func main() {
 			"empty env variable WONKY_SRC: \"%s\", WONKY_DST: \"%s\"\n",
 			src, dst,
 		)
+		os.Exit(1)
 	}
 
 	dirChan := make(chan dirReq, chanSize)
