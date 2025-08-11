@@ -1,21 +1,33 @@
 package main
 
-const src = "/run/media/hawk/EOS_DIGITAL/DCIM/100CANON"
-const dst = "/home/hawk/data/photos"
-const cachePath = "/home/hawk/data/photos/cache.bin"
-const workers = 8
+import (
+	"fmt"
+	"os"
+	"path"
+)
 
 const (
+	workers   = 8
 	chanSize  = workers * 16
 	filePerms = 0644
 	dirPerms  = 0755
 )
 
 func main() {
+	src := os.Getenv("WONKY_SRC")
+	dst := os.Getenv("WONKY_DST")
+
+	if src == "" || dst == "" {
+		fmt.Printf(
+			"empty env variable WONKY_SRC: \"%s\", WONKY_DST: \"%s\"\n",
+			src, dst,
+		)
+	}
+
 	dirChan := make(chan dirReq, chanSize)
 	go dirCreator(dirChan)
 
-	cache := initCache(cachePath)
+	cache := initCache(path.Join(dst, "cache.bin"))
 	startWorkers(workers, dst, walker(src), dirChan, cache)
 	close(dirChan)
 	cache.save()

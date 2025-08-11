@@ -16,7 +16,7 @@ type cache struct {
 
 func initCache(path string) *cache {
 	cache := &cache{
-		cmds: make(chan cacheCmd, workers*16),
+		cmds: make(chan cacheCmd, chanSize),
 		path: path,
 	}
 
