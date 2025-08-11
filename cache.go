@@ -48,8 +48,15 @@ func (c *cache) exists(key string) bool {
 }
 
 func (c *cache) store(key string) {
+	shouldSave := make(chan bool)
 	c.cmds <- func(cd cacheData) {
 		cd[key] = struct{}{}
+
+		shouldSave <- (len(cd)%100 == 0)
+	}
+
+	if <-shouldSave {
+		c.save()
 	}
 }
 

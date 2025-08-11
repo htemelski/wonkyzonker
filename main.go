@@ -29,7 +29,7 @@ func main() {
 	go dirCreator(dirChan)
 
 	cache := initCache(path.Join(dst, "cache.bin"))
-	startWorkers(workers, dst, walker(src, cache), dirChan, cache)
+	startWorkers(workers, dst, walker(src), dirChan, cache)
 	close(dirChan)
 	cache.save()
 }

@@ -25,7 +25,7 @@ func extractMetadata(path string, info fs.FileInfo) fileMetadata {
 	}
 }
 
-func walker(dir string, cache *cache) chan fileMetadata {
+func walker(dir string) chan fileMetadata {
 	metadataChan := make(chan fileMetadata, chanSize)
 	f, err := os.Open(dir)
 	if err != nil {
@@ -51,7 +51,6 @@ func walker(dir string, cache *cache) chan fileMetadata {
 			metadataChan <- extractMetadata(path, info)
 			if progress%100 == 0 {
 				fmt.Printf("Processed %d/%d files\n", progress, filesCount)
-				cache.save()
 			}
 			progress++
 			return nil
