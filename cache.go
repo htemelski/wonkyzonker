@@ -22,9 +22,9 @@ func initCache(path string) *cache {
 	}
 
 	data := cacheData{}
-	fileData, err := os.ReadFile(cache.path)
+	file, err := os.OpenFile(cache.path, os.O_RDONLY, filePerms)
 	if err == nil {
-		_ = gob.NewDecoder(bytes.NewReader(fileData)).Decode(&data)
+		_ = gob.NewDecoder(file).Decode(&data)
 	}
 
 	go func() {
@@ -56,7 +56,7 @@ func (c *cache) store(key string) {
 	}
 
 	if <-shouldSave {
-		c.save()
+		go c.save()
 	}
 }
 
