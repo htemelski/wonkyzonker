@@ -1,7 +1,8 @@
 package main
 
 import (
-	"encoding/json"
+	"bytes"
+	"encoding/gob"
 	"os"
 	"sync"
 )
@@ -23,7 +24,7 @@ func initCache(path string) *cache {
 	data := cacheData{}
 	fileData, err := os.ReadFile(cache.path)
 	if err == nil {
-		_ = json.Unmarshal(fileData, &data)
+		_ = gob.NewDecoder(bytes.NewReader(fileData)).Decode(&data)
 	}
 
 	go func() {
@@ -58,9 +59,9 @@ func (c *cache) save() {
 
 	c.cmds <- func(cd cacheData) {
 		defer wg.Done()
-
-		data, _ := json.Marshal(cd)
-		_ = os.WriteFile(c.path, data, 0644)
+		buf := &bytes.Buffer{}
+		_ = gob.NewEncoder(buf).Encode(cd)
+		_ = os.WriteFile(c.path, buf.Bytes(), filePerms)
 	}
 
 	wg.Wait()

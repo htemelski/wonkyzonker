@@ -36,7 +36,7 @@ func read(src string) (file, error) {
 	return data, nil
 }
 
-func handleExistingFile(fileLocation string, meta fileMetadata, iterations int) {
+func handleExistingFile(fileLocation string, meta fileMetadata, iterations int) error {
 	ogLocation := fileLocation
 
 	if iterations != 0 {
@@ -49,7 +49,7 @@ func handleExistingFile(fileLocation string, meta fileMetadata, iterations int) 
 	newFile, err := read(meta.path)
 	if err != nil {
 		fmt.Printf("failed to read new file %s, error: %s\n", meta.path, err.Error())
-		return
+		return err
 	}
 
 	existingFile, err := read(fileLocation)
@@ -57,22 +57,23 @@ func handleExistingFile(fileLocation string, meta fileMetadata, iterations int) 
 		err = newFile.write(fileLocation)
 		if err != nil {
 			fmt.Printf("failed to write new file %s, error: %s", fileLocation, err.Error())
+			return err
 		}
-		return
+		return nil
 	}
 
 	if existingFile.sha256() == newFile.sha256() {
-		return
+		return nil
 	}
 
-	handleExistingFile(ogLocation, meta, iterations+1)
+	return handleExistingFile(ogLocation, meta, iterations+1)
 }
 
-func handleNewFile(meta fileMetadata, fileLocation string, dirChan chan<- dirReq) {
+func handleNewFile(meta fileMetadata, fileLocation string, dirChan chan<- dirReq) error {
 	file, err := read(meta.path)
 	if err != nil {
 		fmt.Printf("failed to read file %s, error: %s\n", meta.fileName, err.Error())
-		return
+		return err
 	}
 
 	dirWg := &sync.WaitGroup{}
@@ -87,5 +88,8 @@ func handleNewFile(meta fileMetadata, fileLocation string, dirChan chan<- dirReq
 	err = file.write(fileLocation)
 	if err != nil {
 		fmt.Printf("failed to write file %s, error: %s\n", fileLocation, err.Error())
+		return err
 	}
+
+	return nil
 }

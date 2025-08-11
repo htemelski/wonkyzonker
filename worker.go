@@ -37,14 +37,17 @@ func worker(
 			continue
 		}
 
-		cache.store(meta.fileName)
+		var fileErr error
 		fileLocation := path.Join(dst, meta.format, meta.creationDate, meta.fileName)
 		_, err := os.Stat(fileLocation)
 		if errors.Is(err, fs.ErrNotExist) {
-			handleNewFile(meta, fileLocation, dirChan)
-			continue
+			fileErr = handleNewFile(meta, fileLocation, dirChan)
+		} else {
+			fileErr = handleExistingFile(fileLocation, meta, 0)
 		}
 
-		handleExistingFile(fileLocation, meta, 0)
+		if fileErr == nil {
+			cache.store(meta.fileName)
+		}
 	}
 }
