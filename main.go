@@ -15,7 +15,7 @@ func main() {
 	dirChan := make(chan dirReq, chanSize)
 	go dirCreator(dirChan)
 
-	cache := initCache()
+	cache := initCache(cachePath)
 	startWorkers(workers, dst, walker(src), dirChan, cache)
 	close(dirChan)
 	cache.save()

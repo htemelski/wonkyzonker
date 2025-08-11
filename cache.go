@@ -7,25 +7,27 @@ import (
 )
 
 type cacheData map[string]struct{}
-type cacheCmd func(*cacheData)
+type cacheCmd func(cacheData)
 
 type cache struct {
-	cmdChan chan cacheCmd
+	cmds chan cacheCmd
+	path string
 }
 
-func initCache() *cache {
+func initCache(path string) *cache {
 	cache := &cache{
-		cmdChan: make(chan cacheCmd, 16),
+		cmds: make(chan cacheCmd, workers*16),
+		path: path,
 	}
 
-	data := &cacheData{}
-	fileData, err := os.ReadFile(cachePath)
+	data := cacheData{}
+	fileData, err := os.ReadFile(cache.path)
 	if err == nil {
-		_ = json.Unmarshal(fileData, data)
+		_ = json.Unmarshal(fileData, &data)
 	}
 
 	go func() {
-		for cmd := range cache.cmdChan {
+		for cmd := range cache.cmds {
 			cmd(data)
 		}
 	}()
@@ -36,8 +38,8 @@ func initCache() *cache {
 func (c *cache) exists(key string) bool {
 	res := make(chan bool)
 
-	c.cmdChan <- func(cd *cacheData) {
-		_, ok := (*cd)[key]
+	c.cmds <- func(cd cacheData) {
+		_, ok := cd[key]
 		res <- ok
 	}
 
@@ -45,8 +47,8 @@ func (c *cache) exists(key string) bool {
 }
 
 func (c *cache) store(key string) {
-	c.cmdChan <- func(cd *cacheData) {
-		(*cd)[key] = struct{}{}
+	c.cmds <- func(cd cacheData) {
+		cd[key] = struct{}{}
 	}
 }
 
@@ -54,11 +56,11 @@ func (c *cache) save() {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
-	c.cmdChan <- func(cd *cacheData) {
+	c.cmds <- func(cd cacheData) {
 		defer wg.Done()
 
-		data, _ := json.Marshal(&cd)
-		_ = os.WriteFile(cachePath, data, 0644)
+		data, _ := json.Marshal(cd)
+		_ = os.WriteFile(c.path, data, 0644)
 	}
 
 	wg.Wait()
