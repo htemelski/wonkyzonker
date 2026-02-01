@@ -17,6 +17,11 @@ func main() {
 	src := os.Getenv("WONKY_SRC")
 	dst := os.Getenv("WONKY_DST")
 
+	if len(os.Args) != 2 {
+		fmt.Println("please pass the name of the camera as a cmd line arg")
+		os.Exit(1)
+	}
+
 	if src == "" || dst == "" {
 		fmt.Printf(
 			"empty env variable WONKY_SRC: \"%s\", WONKY_DST: \"%s\"\n",
@@ -24,6 +29,8 @@ func main() {
 		)
 		os.Exit(1)
 	}
+
+	dst = path.Join(dst, os.Args[1])
 
 	dirChan := make(chan dirReq, chanSize)
 	go dirCreator(dirChan)
