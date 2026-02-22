@@ -10,9 +10,17 @@ import (
 
 func extractMetadata(path string, info fs.FileInfo) fileMetadata {
 	fileParts := strings.Split(path, "/")
-	fileName := fileParts[len(fileParts)-1]
 
-	format := strings.Split(fileName, ".")[1]
+	fileName := fileParts[len(fileParts)-1]
+	if len(fileParts) >= 3 {
+		fileName = fmt.Sprintf("%s-%s", fileParts[len(fileParts)-2], fileName)
+	}
+
+	fileNameParts := strings.Split(fileName, ".")
+	format := "misc"
+	if len(fileNameParts) == 2 {
+		format = fileNameParts[1]
+	}
 
 	year, month, day := info.ModTime().Date()
 	creationDate := fmt.Sprintf("%d-%d-%d", year, month, day)
@@ -25,26 +33,24 @@ func extractMetadata(path string, info fs.FileInfo) fileMetadata {
 	}
 }
 
-func walker(dir string) chan fileMetadata {
+func walker(rootDir string) chan fileMetadata {
 	metadataChan := make(chan fileMetadata, chanSize)
-	f, err := os.Open(dir)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	files, err := f.Readdirnames(-1)
-	if err != nil {
-		fmt.Printf("failed read dirnames %s\n", err.Error())
-		os.Exit(1)
-	}
-
-	filesCount := len(files)
+	filesCount := 0
 
 	go func() {
 		defer close(metadataChan)
 		progress := 0
-		err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
+		err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
 			if info.IsDir() {
+				if path != rootDir {
+					filesCount -= 1
+				}
+
+				count, err := filesCounter(path)
+				if err != nil {
+					return err
+				}
+				filesCount += count
 				return nil
 			}
 
@@ -52,6 +58,7 @@ func walker(dir string) chan fileMetadata {
 			if progress%100 == 0 {
 				fmt.Printf("Processed %d/%d files\n", progress, filesCount)
 			}
+
 			progress++
 			return nil
 		})
@@ -62,4 +69,20 @@ func walker(dir string) chan fileMetadata {
 	}()
 
 	return metadataChan
+}
+
+func filesCounter(dir string) (int, error) {
+	f, err := os.Open(dir)
+	if err != nil {
+		fmt.Println(err)
+		return 0, err
+	}
+
+	files, err := f.Readdirnames(-1)
+	if err != nil {
+		fmt.Printf("failed read dirnames %s\n", err.Error())
+		return 0, err
+	}
+
+	return len(files), nil
 }
