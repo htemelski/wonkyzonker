@@ -23,7 +23,7 @@ func extractMetadata(path string, info fs.FileInfo) fileMetadata {
 	}
 
 	year, month, day := info.ModTime().Date()
-	creationDate := fmt.Sprintf("%d-%d-%d", year, month, day)
+	creationDate := fmt.Sprintf("%d-%02d-%02d", year, month, day)
 
 	return fileMetadata{
 		path:         path,

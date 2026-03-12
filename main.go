@@ -31,6 +31,11 @@ func main() {
 	}
 
 	dst = path.Join(dst, os.Args[1])
+	err := os.MkdirAll(dst, 0755)
+	if err != nil {
+		fmt.Printf("failed to create directory %s: %v", dst, err)
+		os.Exit(1)
+	}
 
 	dirChan := make(chan dirReq, chanSize)
 	go dirCreator(dirChan)
